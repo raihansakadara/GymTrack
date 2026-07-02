@@ -65,17 +65,22 @@ export default function Measurements() {
 
     return (
         <div className="p-6 md:p-10 lg:p-14 space-y-8">
-            <div className="flex items-end justify-between">
+            <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
                 <div>
-                    <div className="text-xs tracking-[0.25em] uppercase text-muted-foreground mb-2">Body</div>
-                    <h1 className="font-display text-4xl sm:text-5xl font-black tracking-tighter">Measurements</h1>
+                    <div className="text-xs tracking-[0.25em] uppercase text-muted-foreground mb-2">
+                        Body
+                    </div>
+
+                    <h1 className="font-display text-3xl sm:text-4xl lg:text-5xl font-black tracking-tighter">
+                        Measurements
+                    </h1>
                 </div>
+
                 <button
                     onClick={() => setShowForm(v => !v)}
                     data-testid="toggle-measurement-form"
-                    className="bg-accent text-accent-foreground hover:bg-accent/90 font-bold tracking-wide rounded-none px-5 py-3 flex items-center gap-2 transition-colors"
-                >
-                    <Plus className="h-4 w-4" strokeWidth={2} />
+                    className="w-full sm:w-auto bg-accent text-accent-foreground hover:bg-accent/90 font-bold tracking-wide rounded-none px-5 py-3 flex items-center justify-center gap-2 transition-colors">
+                <Plus className="h-4 w-4" strokeWidth={2} />
                     {showForm ? "Close" : "Add Entry"}
                 </button>
             </div>
