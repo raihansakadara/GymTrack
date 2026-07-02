@@ -121,22 +121,22 @@ export default function NewWorkout() {
                             </button>
                         </div>
                         <div>
-                            <div className="grid grid-cols-[60px_1fr_1fr_40px] border-b border-border text-xs uppercase tracking-wider text-muted-foreground">
-                                <div className="p-3 border-r border-border">Set</div>
-                                <div className="p-3 border-r border-border">Reps</div>
-                                <div className="p-3 border-r border-border">Weight (kg)</div>
-                                <div className="p-3"></div>
+                            <div className="grid grid-cols-[40px_1fr_1fr_36px] sm:grid-cols-[60px_1fr_1fr_40px] border-b border-border text-[10px] sm:text-xs uppercase tracking-wider text-muted-foreground">
+                                <div className="p-2 sm:p-3 border-r border-border text-center">#</div>
+                                <div className="p-2 sm:p-3 border-r border-border">Reps</div>
+                                <div className="p-2 sm:p-3 border-r border-border">Wt (kg)</div>
+                                <div className="p-2 sm:p-3"></div>
                             </div>
                             {ex.sets.map((s, si) => (
-                                <div key={si} className="grid grid-cols-[60px_1fr_1fr_40px] border-b border-border last:border-b-0">
-                                    <div className="p-3 border-r border-border text-sm font-semibold tabular-nums">{si + 1}</div>
+                                <div key={si} className="grid grid-cols-[40px_1fr_1fr_36px] sm:grid-cols-[60px_1fr_1fr_40px] border-b border-border last:border-b-0">
+                                    <div className="p-2 sm:p-3 border-r border-border text-sm font-semibold tabular-nums text-center">{si + 1}</div>
                                     <input
                                         type="text"
                                         inputMode="numeric"
                                         value={s.reps}
                                         onChange={e => updateSet(ei, si, "reps", e.target.value)}
                                         data-testid={`reps-${ei}-${si}`}
-                                        className="p-3 border-r border-border bg-transparent focus:outline-none focus:bg-muted tabular-nums"
+                                        className="w-full min-w-0 p-2 sm:p-3 border-r border-border bg-transparent focus:outline-none focus:bg-muted tabular-nums"
                                     />
                                     <input
                                         type="text"
@@ -144,10 +144,10 @@ export default function NewWorkout() {
                                         value={s.weight}
                                         onChange={e => updateSet(ei, si, "weight", e.target.value)}
                                         data-testid={`weight-${ei}-${si}`}
-                                        className="p-3 border-r border-border bg-transparent focus:outline-none focus:bg-muted tabular-nums"
+                                        className="w-full min-w-0 p-2 sm:p-3 border-r border-border bg-transparent focus:outline-none focus:bg-muted tabular-nums"
                                     />
-                                    <button onClick={() => removeSet(ei, si)} className="p-3 hover:bg-muted flex items-center justify-center">
-                                        <X className="h-3 w-3" />
+                                    <button onClick={() => removeSet(ei, si)} className="p-2 sm:p-3 hover:bg-muted flex items-center justify-center">
+                                        <X className="h-3 w-3 sm:h-4 sm:w-4" />
                                     </button>
                                 </div>
                             ))}
