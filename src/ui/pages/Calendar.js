@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { supabase } from "../../lib/supabase";
 import { useAuth } from "../contexts/AuthContext";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import LoadingIndicator from "../components/LoadingIndicator";
 
 function monthMatrix(year, month) {
     const first = new Date(year, month, 1);
@@ -46,6 +47,7 @@ export default function CalendarPage() {
     const [year, setYear] = useState(now.getFullYear());
     const [month, setMonth] = useState(now.getMonth());
     const [workouts, setWorkouts] = useState([]);
+    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         if (!user) return;
@@ -56,6 +58,7 @@ export default function CalendarPage() {
             .eq("user_id", user.sub)
             .then(({ data }) => {
                 setWorkouts(data || []);
+                setLoading(false);
             });
     }, [user]);
 
@@ -96,6 +99,14 @@ export default function CalendarPage() {
         const d = new Date(w.date);
         return d.getFullYear() === year && d.getMonth() === month;
     }).length;
+
+    if (loading) {
+        return (
+            <div className="p-4 sm:p-6 md:p-8 lg:p-10 flex items-center justify-center min-h-[60vh]">
+                <LoadingIndicator size={48} className="text-muted-foreground" />
+            </div>
+        );
+    }
 
     return (
         <div className="p-4 sm:p-6 md:p-8 lg:p-10 space-y-6">

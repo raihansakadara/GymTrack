@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "../../lib/supabase";
 import { ArrowUpRight } from "lucide-react";
+import LoadingIndicator from "../components/LoadingIndicator";
 
 const coverBySplit = {
     "PPL": "https://images.unsplash.com/photo-1581009146145-b5ef050c2e1e?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA1NjZ8MHwxfHNlYXJjaHw0fHxneW0lMjB3b3Jrb3V0JTIwZXhlcmNpc2V8ZW58MHx8fHwxNzgyOTU3NDg0fDA&ixlib=rb-4.1.0&q=85",
@@ -11,6 +12,7 @@ const coverBySplit = {
 
 export default function Templates() {
     const [items, setItems] = useState([]);
+    const [loading, setLoading] = useState(true);
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -18,7 +20,10 @@ export default function Templates() {
             .from("templates")
             .select("*")
             .order("name")
-            .then(({ data }) => setItems(data || []));
+            .then(({ data }) => {
+                setItems(data || []);
+                setLoading(false);
+            });
     }, []);
 
     const grouped = items.reduce((acc, t) => {
@@ -26,6 +31,14 @@ export default function Templates() {
         acc[t.split].push(t);
         return acc;
     }, {});
+
+    if (loading) {
+        return (
+            <div className="p-6 md:p-10 lg:p-14 flex items-center justify-center min-h-[60vh]">
+                <LoadingIndicator size={48} className="text-muted-foreground" />
+            </div>
+        );
+    }
 
     return (
         <div className="p-6 md:p-10 lg:p-14 space-y-10">

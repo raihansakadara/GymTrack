@@ -4,6 +4,7 @@ import { useAuth } from "../contexts/AuthContext";
 import { Trash2, Plus } from "lucide-react";
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 import { toast } from "sonner";
+import LoadingIndicator from "../components/LoadingIndicator";
 
 const fields = [
     { key: "weight", label: "Weight (kg)" },
@@ -20,6 +21,7 @@ export default function Measurements() {
     const [items, setItems] = useState([]);
     const [form, setForm] = useState({ date: new Date().toISOString().slice(0, 10) });
     const [showForm, setShowForm] = useState(false);
+    const [loading, setLoading] = useState(true);
 
     const load = useCallback(async () => {
         const { data } = await supabase
@@ -28,6 +30,7 @@ export default function Measurements() {
             .eq("user_id", user.sub)
             .order("date", { ascending: false });
         setItems(data || []);
+        setLoading(false);
     }, [user.sub]);
 
     useEffect(() => { if (user) load(); }, [user, load]);
@@ -62,6 +65,14 @@ export default function Measurements() {
     };
 
     const weightSeries = items.filter(m => m.weight != null).map(m => ({ date: m.date, weight: m.weight }));
+
+    if (loading) {
+        return (
+            <div className="p-6 md:p-10 lg:p-14 flex items-center justify-center min-h-[60vh]">
+                <LoadingIndicator size={48} className="text-muted-foreground" />
+            </div>
+        );
+    }
 
     return (
         <div className="p-6 md:p-10 lg:p-14 space-y-8">

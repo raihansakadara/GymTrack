@@ -4,11 +4,13 @@ import {supabase} from "../../lib/supabase";
 import {useAuth} from "../contexts/AuthContext";
 import {Plus, Trash2, ChevronDown, ChevronUp} from "lucide-react";
 import {toast} from "sonner";
+import LoadingIndicator from "../components/LoadingIndicator";
 
 export default function Workouts() {
     const {user} = useAuth();
     const [items, setItems] = useState([]);
     const [openId, setOpenId] = useState(null);
+    const [loading, setLoading] = useState(true);
 
     const load = useCallback(async () => {
         const {data, error} = await supabase
@@ -21,6 +23,7 @@ export default function Workouts() {
             return;
         }
         setItems(data || []);
+        setLoading(false);
     }, [user.sub]);
 
     useEffect(() => {
@@ -37,6 +40,14 @@ export default function Workouts() {
         toast.success("Workout deleted");
         load();
     };
+
+    if (loading) {
+        return (
+            <div className="p-6 md:p-10 lg:p-14 flex items-center justify-center min-h-[60vh]">
+                <LoadingIndicator size={48} className="text-muted-foreground" />
+            </div>
+        );
+    }
 
     return (
         <div className="p-6 md:p-10 lg:p-14 space-y-8">
