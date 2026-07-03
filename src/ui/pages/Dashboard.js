@@ -4,11 +4,15 @@ import { supabase } from "../../lib/supabase";
 import { useAuth } from "../contexts/AuthContext";
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 import { Plus, ArrowUpRight, Dumbbell, Ruler } from "lucide-react";
+import ComboBox from "../components/ComboBox";
+import LoadingIndicator from "../components/LoadingIndicator";
 
 export default function Dashboard() {
     const { user } = useAuth();
     const [stats, setStats] = useState(null);
     const [recentWorkouts, setRecentWorkouts] = useState([]);
+    const [period, setPeriod] = useState(1);
+    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         if (!user) return;
@@ -25,7 +29,11 @@ export default function Dashboard() {
                 .eq("user_id", user.sub)
                 .order("date", { ascending: true });
 
-            const list = workouts || [];
+            const cutoff = period
+                ? new Date(Date.now() - (period - 1) * 86400000).toISOString().slice(0, 10)
+                : null;
+            const list = (workouts || []).filter(w => !cutoff || w.date >= cutoff);
+            const measured = (measurements || []).filter(m => !cutoff || m.date >= cutoff);
             const totalSets = list.reduce((a, w) => a + (w.exercises?.reduce((s, e) => s + (e.sets?.length || 0), 0) || 0), 0);
             const totalVolume = list.reduce((a, w) =>
                     a + (w.exercises?.reduce((s, e) =>
@@ -46,15 +54,24 @@ export default function Dashboard() {
                 total_sets: totalSets,
                 total_volume: totalVolume,
                 personal_records: Array.from(prMap.values()).sort((a, b) => b.weight - a.weight),
-                weight_series: (measurements || []).filter(m => m.weight != null).map(m => ({ date: m.date, weight: m.weight })),
+                weight_series: measured.filter(m => m.weight != null).map(m => ({ date: m.date, weight: m.weight })),
             });
 
             setRecentWorkouts(list.slice(0, 5));
+            setLoading(false);
         })();
-    }, [user]);
+    }, [user, period]);
+
+    if (loading) {
+        return (
+            <div className="p-5 flex items-center justify-center min-h-[60vh]">
+                <LoadingIndicator size={48} className="text-muted-foreground" />
+            </div>
+        );
+    }
 
     return (
-        <div className="p-6 md:p-10 lg:p-14 space-y-12">
+        <div className="p-5 space-y-5">
             <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4">
                 <div>
                     <div className="text-xs tracking-[0.25em] uppercase text-muted-foreground mb-2">Welcome back</div>
@@ -62,7 +79,7 @@ export default function Dashboard() {
                         {user?.name?.split(" ")[0] || "Athlete"}.
                     </h1>
                 </div>
-                <div className="flex gap-3">
+                <div className="flex gap-2">
                     <Link
                         to="/workouts/new"
                         data-testid="cta-new-workout"
@@ -82,6 +99,20 @@ export default function Dashboard() {
                 </div>
             </div>
 
+            <div className="flex justify-end">
+                <ComboBox
+                    value={period}
+                    onChange={setPeriod}
+                    options={[
+                        { value: 1, label: "Today" },
+                        { value: 2, label: "2 Days" },
+                        { value: 7, label: "7 Days" },
+                        { value: 30, label: "1 Month" },
+                        { value: null, label: "All Time" },
+                    ]}
+                />
+            </div>
+
             <div className="grid grid-cols-2 md:grid-cols-4 border border-border">
                 {[
                     { label: "Workouts", value: stats?.total_workouts ?? 0 },
@@ -91,7 +122,7 @@ export default function Dashboard() {
                 ].map((s, i) => (
                     <div
                         key={s.label}
-                        className={`p-6 sm:p-8 ${i < 3 ? "md:border-r border-border" : ""} ${i < 2 ? "border-r border-border md:border-r" : ""} ${i < 2 ? "border-b md:border-b-0" : ""}`}
+                        className={`p-5 ${i < 3 ? "md:border-r border-border" : ""} ${i < 2 ? "border-r border-border md:border-r" : ""} ${i < 2 ? "border-b md:border-b-0" : ""}`}
                     >
                         <div className="text-xs tracking-[0.2em] uppercase text-muted-foreground mb-3">{s.label}</div>
                         <div className="font-display text-4xl sm:text-5xl font-black tracking-tighter tabular-nums">{s.value}</div>
