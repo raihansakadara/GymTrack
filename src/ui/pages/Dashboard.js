@@ -4,14 +4,12 @@ import { supabase } from "../../lib/supabase";
 import { useAuth } from "../contexts/AuthContext";
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 import { Plus, ArrowUpRight, Dumbbell, Ruler } from "lucide-react";
-import ComboBox from "../components/ComboBox";
 import LoadingIndicator from "../components/LoadingIndicator";
 
 export default function Dashboard() {
     const { user } = useAuth();
     const [stats, setStats] = useState(null);
     const [recentWorkouts, setRecentWorkouts] = useState([]);
-    const [period, setPeriod] = useState(1);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
@@ -29,11 +27,9 @@ export default function Dashboard() {
                 .eq("user_id", user.sub)
                 .order("date", { ascending: true });
 
-            const cutoff = period
-                ? new Date(Date.now() - (period - 1) * 86400000).toISOString().slice(0, 10)
-                : null;
-            const list = (workouts || []).filter(w => !cutoff || w.date >= cutoff);
-            const measured = (measurements || []).filter(m => !cutoff || m.date >= cutoff);
+            const list = workouts || [];
+            const measured = measurements || [];
+
             const totalSets = list.reduce((a, w) => a + (w.exercises?.reduce((s, e) => s + (e.sets?.length || 0), 0) || 0), 0);
             const totalVolume = list.reduce((a, w) =>
                     a + (w.exercises?.reduce((s, e) =>
@@ -60,7 +56,7 @@ export default function Dashboard() {
             setRecentWorkouts(list.slice(0, 5));
             setLoading(false);
         })();
-    }, [user, period]);
+    }, [user]);
 
     if (loading) {
         return (
@@ -97,20 +93,6 @@ export default function Dashboard() {
                         Add Metric
                     </Link>
                 </div>
-            </div>
-
-            <div className="flex justify-end">
-                <ComboBox
-                    value={period}
-                    onChange={setPeriod}
-                    options={[
-                        { value: 1, label: "Today" },
-                        { value: 2, label: "2 Days" },
-                        { value: 7, label: "7 Days" },
-                        { value: 30, label: "1 Month" },
-                        { value: null, label: "All Time" },
-                    ]}
-                />
             </div>
 
             <div className="grid grid-cols-2 md:grid-cols-4 border border-border">
