@@ -75,7 +75,7 @@ export default function Measurements() {
     }
 
     return (
-        <div className="p-6 md:p-10 lg:p-14 space-y-8">
+        <div className="p-5 space-y-8">
             <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
                 <div>
                     <div className="text-xs tracking-[0.25em] uppercase text-muted-foreground mb-2">

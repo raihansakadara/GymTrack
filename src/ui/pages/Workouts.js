@@ -12,8 +12,10 @@ export default function Workouts() {
     const [items, setItems] = useState([]);
     const [openId, setOpenId] = useState(null);
     const today = new Date();
+    const sevenDaysAgo = new Date(today);
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
     const [appliedRange, setAppliedRange] = useState({
-        startDate: today,
+        startDate: sevenDaysAgo,
         endDate: today,
         key: "selection",
     });

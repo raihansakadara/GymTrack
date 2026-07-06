@@ -14,7 +14,7 @@ export default function NewWorkout() {
     const [params] = useSearchParams();
     const templateId = params.get("template");
 
-    const [title, setTitle] = useState("Workout");
+    const [title, setTitle] = useState("");
     const [date, setDate] = useState(() => new Date().toISOString().slice(0, 10));
     const [notes, setNotes] = useState("");
     const [exercises, setExercises] = useState([emptyExercise()]);
@@ -88,6 +88,7 @@ export default function NewWorkout() {
                     <label className="text-xs tracking-[0.2em] uppercase text-muted-foreground block mb-2">Title</label>
                     <input
                         data-testid="workout-title-input"
+                        placeholder="Title name (e.g. Push Day)"
                         value={title}
                         onChange={e => setTitle(e.target.value)}
                         className="w-full border-0 bg-transparent focus:outline-none text-lg font-semibold"
