@@ -1,10 +1,10 @@
-import { NavLink, Outlet, useNavigate } from "react-router-dom";
+import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import { LayoutGrid, Dumbbell, Ruler, LayoutTemplate, CalendarDays, LogOut } from "lucide-react";
 
 const navItems = [
     { to: "/dashboard", label: "Overview", icon: LayoutGrid, testId: "nav-dashboard" },
-    { to: "/workouts", label: "Workouts", icon: Dumbbell, testId: "nav-workouts" },
+    { to: "/routines", label: "Routines", icon: Dumbbell, testId: "nav-routines" },
     { to: "/measurements", label: "Body", icon: Ruler, testId: "nav-measurements" },
     { to: "/templates", label: "Templates", icon: LayoutTemplate, testId: "nav-templates" },
     { to: "/calendar", label: "Calendar", icon: CalendarDays, testId: "nav-calendar" },
@@ -13,6 +13,14 @@ const navItems = [
 export default function Layout() {
     const { user, logout } = useAuth();
     const navigate = useNavigate();
+    const location = useLocation();
+
+    const isNavActive = (to) => {
+        if (to === "/routines") {
+            return location.pathname === "/routines" || location.pathname.startsWith("/routines/");
+        }
+        return location.pathname === to || location.pathname.startsWith(to + "/");
+    };
 
     const handleLogout = async () => {
         await logout();
@@ -27,23 +35,24 @@ export default function Layout() {
                     <div className="text-xs tracking-[0.25em] uppercase text-muted-foreground mt-1">Gym Progress</div>
                 </div>
                 <nav className="flex-1 py-6">
-                    {navItems.map(({ to, label, icon: Icon, testId }) => (
-                        <NavLink
-                            key={to}
-                            to={to}
-                            data-testid={testId}
-                            className={({ isActive }) =>
-                                `flex items-center gap-3 px-6 py-3 text-sm border-l-2 transition-colors ${
-                                    isActive
+                    {navItems.map(({ to, label, icon: Icon, testId }) => {
+                        const active = isNavActive(to);
+                        return (
+                            <NavLink
+                                key={to}
+                                to={to}
+                                data-testid={testId}
+                                className={`flex items-center gap-3 px-6 py-3 text-sm border-l-2 transition-colors ${
+                                    active
                                         ? "border-accent text-foreground font-semibold bg-muted"
                                         : "border-transparent text-muted-foreground hover:text-foreground hover:bg-muted/60"
-                                }`
-                            }
-                        >
-                            <Icon className="h-4 w-4" strokeWidth={1.5} />
-                            <span className="tracking-tight">{label}</span>
-                        </NavLink>
-                    ))}
+                                }`}
+                            >
+                                <Icon className="h-4 w-4" strokeWidth={1.5} />
+                                <span className="tracking-tight">{label}</span>
+                            </NavLink>
+                        );
+                    })}
                 </nav>
                 <div className="border-t border-border p-4 flex items-center gap-3">
                     {user?.picture ? (
@@ -76,20 +85,21 @@ export default function Layout() {
                     </button>
                 </header>
                 <nav className="md:hidden flex overflow-x-auto border-b border-border bg-white shrink-0">
-                    {navItems.map(({ to, label, testId }) => (
-                        <NavLink
-                            key={to}
-                            to={to}
-                            data-testid={`${testId}-mobile`}
-                            className={({ isActive }) =>
-                                `px-4 py-3 text-xs uppercase tracking-wider whitespace-nowrap border-b-2 ${
-                                    isActive ? "border-accent text-foreground font-semibold" : "border-transparent text-muted-foreground"
-                                }`
-                            }
-                        >
-                            {label}
-                        </NavLink>
-                    ))}
+                    {navItems.map(({ to, label, testId }) => {
+                        const active = isNavActive(to);
+                        return (
+                            <NavLink
+                                key={to}
+                                to={to}
+                                data-testid={`${testId}-mobile`}
+                                className={`px-4 py-3 text-xs uppercase tracking-wider whitespace-nowrap border-b-2 ${
+                                    active ? "border-accent text-foreground font-semibold" : "border-transparent text-muted-foreground"
+                                }`}
+                            >
+                                {label}
+                            </NavLink>
+                        );
+                    })}
                 </nav>
                 <main className="flex-1 overflow-y-auto">
                     <Outlet />

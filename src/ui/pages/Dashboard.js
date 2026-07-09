@@ -77,7 +77,7 @@ export default function Dashboard() {
                 </div>
                 <div className="flex gap-2">
                     <Link
-                        to="/workouts/new"
+                        to="/routines/log"
                         data-testid="cta-new-workout"
                         className="bg-accent text-accent-foreground hover:bg-accent/90 font-bold tracking-wide rounded-none px-5 py-3 flex items-center gap-2 transition-colors"
                     >
@@ -161,16 +161,16 @@ export default function Dashboard() {
             <div>
                 <div className="flex items-center justify-between mb-4">
                     <h3 className="font-display text-2xl font-bold tracking-tight">Recent Workouts</h3>
-                    <Link to="/workouts" className="text-xs tracking-[0.2em] uppercase text-muted-foreground hover:text-foreground flex items-center gap-1">
+                    <Link to="/routines" className="text-xs tracking-[0.2em] uppercase text-muted-foreground hover:text-foreground flex items-center gap-1">
                         View all <ArrowUpRight className="h-3 w-3" />
                     </Link>
                 </div>
                 <div className="border border-border">
                     {recentWorkouts.length ? (
                         recentWorkouts.map((w) => (
-                            <Link
-                                key={w.id}
-                                to={`/workouts`}
+                                <Link
+                                    key={w.id}
+                                    to={w.routine_id ? `/routines/${w.routine_id}` : `/routines`}
                                 className="flex items-center justify-between p-4 sm:p-5 border-b border-border last:border-b-0 hover:bg-muted transition-colors"
                                 data-testid={`recent-workout-${w.id}`}
                             >
@@ -188,7 +188,7 @@ export default function Dashboard() {
                         ))
                     ) : (
                         <div className="p-8 text-center text-sm text-muted-foreground">
-                            No workouts yet. <Link to="/workouts/new" className="underline underline-offset-4">Log your first one</Link>.
+                            No workouts yet. <Link to="/routines/log" className="underline underline-offset-4">Log your first one</Link>.
                         </div>
                     )}
                 </div>

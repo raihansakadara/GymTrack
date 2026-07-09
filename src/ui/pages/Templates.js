@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import LoadingIndicator from "../components/LoadingIndicator";
 import Modal from "../components/Modal";
 import ConfirmModal from "../components/ConfirmModal";
+import ExercisePickerModal from "../components/ExercisePickerModal";
 
 const coverBySplit = {
     "Custom": "https://images.unsplash.com/photo-1534438327276-14e5300c3a48?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA1NjZ8MHwxfHNlYXJjaHwxfHxneW0lMjBpbnRlcmlvcnxlbnwwfHx8fDE3ODI5NTc0ODR8MA&ixlib=rb-4.1.0&q=85",
@@ -15,14 +16,14 @@ const coverBySplit = {
 };
 
 const emptySet = () => ({ reps: 8, weight: 0 });
-const emptyExercise = () => ({ name: "", sets: [emptySet(), emptySet(), emptySet()] });
 
 export default function Templates() {
     const [items, setItems] = useState([]);
     const [loading, setLoading] = useState(true);
     const [modalOpen, setModalOpen] = useState(false);
     const [confirmDelete, setConfirmDelete] = useState(null);
-    const [form, setForm] = useState({ name: "", description: "", exercises: [emptyExercise()] });
+    const [form, setForm] = useState({ name: "", description: "", exercises: [] });
+    const [showPicker, setShowPicker] = useState(false);
     const navigate = useNavigate();
 
     const loadTemplates = useCallback(async () => {
@@ -34,7 +35,7 @@ export default function Templates() {
     useEffect(() => { loadTemplates(); }, [loadTemplates]);
 
     const openModal = () => {
-        setForm({ name: "", description: "", exercises: [emptyExercise()] });
+        setForm({ name: "", description: "", exercises: [] });
         setModalOpen(true);
     };
 
@@ -43,21 +44,34 @@ export default function Templates() {
             ...e, sets: e.sets.map((s, j) => j !== si ? s : { ...s, [field]: Number(val) || 0 })
         })
     }));
-    const updateExName = (ei, val) => setForm(f => ({
-        ...f, exercises: f.exercises.map((e, i) => i === ei ? { ...e, name: val } : e)
-    }));
     const addSet = (ei) => setForm(f => ({
         ...f, exercises: f.exercises.map((e, i) => i === ei ? { ...e, sets: [...e.sets, emptySet()] } : e)
     }));
     const removeSet = (ei, si) => setForm(f => ({
         ...f, exercises: f.exercises.map((e, i) => i === ei ? { ...e, sets: e.sets.filter((_, j) => j !== si) } : e)
     }));
-    const addExercise = () => setForm(f => ({ ...f, exercises: [...f.exercises, emptyExercise()] }));
+    const addExerciseFromPicker = (ex) =>
+        setForm(f => ({
+            ...f,
+            exercises: [...f.exercises, {
+                name: ex.name,
+                wger_id: ex.wger_id ?? null,
+                category: ex.category ?? "",
+                equipment: ex.equipment ?? [],
+                muscles: ex.muscles ?? [],
+                sets: [emptySet(), emptySet(), emptySet()],
+            }],
+        }));
+
     const removeExercise = (ei) => setForm(f => ({ ...f, exercises: f.exercises.filter((_, j) => j !== ei) }));
 
     const handleSave = async () => {
         const exercises = form.exercises.filter(e => e.name.trim()).map(e => ({
             name: e.name.trim(),
+            wger_id: e.wger_id ?? null,
+            category: e.category ?? "",
+            equipment: e.equipment ?? [],
+            muscles: e.muscles ?? [],
             sets: e.sets,
         }));
         if (!form.name.trim()) { toast.error("Please enter a template name"); return; }
@@ -152,7 +166,7 @@ export default function Templates() {
                                     </div>
                                     <div className="mt-6 flex gap-2">
                                         <button
-                                            onClick={() => navigate(`/workouts/new?template=${t.id}`)}
+                                            onClick={() => navigate(`/routines/new?template=${t.id}`)}
                                             data-testid={`use-template-${t.id}`}
                                             className="flex-1 bg-primary text-primary-foreground hover:bg-primary/90 font-bold tracking-wide px-5 py-3 flex items-center justify-center gap-2 transition-colors"
                                         >
@@ -202,17 +216,22 @@ export default function Templates() {
                     <div className="space-y-4">
                         {form.exercises.map((ex, ei) => (
                             <div key={ei} className="border border-border">
-                                <div className="flex items-center justify-between p-3 border-b border-border bg-muted/30">
-                                    <input
-                                        placeholder="Exercise name (e.g. Bench Press)"
-                                        value={ex.name}
-                                        onChange={e => updateExName(ei, e.target.value)}
-                                        className="flex-1 bg-transparent border-0 focus:outline-none text-sm font-semibold placeholder:font-normal placeholder:text-muted-foreground"
-                                    />
-                                    <button onClick={() => removeExercise(ei)} className="p-1 hover:bg-white transition-colors">
-                                        <Trash2 className="h-4 w-4" strokeWidth={1.5} />
-                                    </button>
+                            <div className="flex items-center justify-between p-3 border-b border-border bg-muted/30">
+                                <div className="min-w-0 flex-1">
+                                    <div className="text-sm font-semibold truncate">{ex.name}</div>
+                                    <div className="text-[11px] text-muted-foreground flex gap-2 mt-0.5">
+                                        {ex.category && (
+                                            <span className="uppercase tracking-wider">{ex.category}</span>
+                                        )}
+                                        {ex.equipment?.length > 0 && (
+                                            <span>· {ex.equipment.slice(0, 2).join(", ")}</span>
+                                        )}
+                                    </div>
                                 </div>
+                                <button onClick={() => removeExercise(ei)} className="p-1 hover:bg-white transition-colors shrink-0 ml-2">
+                                    <Trash2 className="h-4 w-4" strokeWidth={1.5} />
+                                </button>
+                            </div>
                                 <div>
                                     <div className="grid grid-cols-[32px_1fr_1fr_28px] border-b border-border text-[10px] uppercase tracking-wider text-muted-foreground">
                                         <div className="p-2 border-r border-border text-center">#</div>
@@ -254,7 +273,7 @@ export default function Templates() {
                             </div>
                         ))}
                         <button
-                            onClick={addExercise}
+                            onClick={() => setShowPicker(true)}
                             className="w-full border border-dashed border-border p-3 text-sm tracking-wide text-muted-foreground hover:text-foreground hover:border-primary/40 flex items-center justify-center gap-2 transition-colors"
                         >
                             <Plus className="h-4 w-4" /> Add exercise
@@ -262,6 +281,16 @@ export default function Templates() {
                     </div>
                 </div>
             </Modal>
+
+            {showPicker && (
+                <ExercisePickerModal
+                    onSelect={(ex) => {
+                        addExerciseFromPicker(ex);
+                        setShowPicker(false);
+                    }}
+                    onClose={() => setShowPicker(false)}
+                />
+            )}
 
             <ConfirmModal
                 open={!!confirmDelete}

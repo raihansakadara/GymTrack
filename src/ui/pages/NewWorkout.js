@@ -4,9 +4,10 @@ import { supabase } from "../../lib/supabase";
 import { useAuth } from "../contexts/AuthContext";
 import { Plus, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
+import ExerciseCombobox from "../components/ExerciseCombobox";
 
 const emptySet = () => ({ reps: 8, weight: 0 });
-const emptyExercise = () => ({ name: "", sets: [emptySet(), emptySet(), emptySet()] });
+const emptyExercise = () => ({ name: "", wger_id: null, category: "", muscles: [], sets: [emptySet(), emptySet(), emptySet()] });
 
 export default function NewWorkout() {
     const { user } = useAuth();
@@ -33,7 +34,13 @@ export default function NewWorkout() {
                 return;
             }
             setTitle(data.name);
-            setExercises(data.exercises.map(e => ({ name: e.name, sets: e.sets.map(s => ({ ...s })) })));
+            setExercises(data.exercises.map(e => ({
+                name: e.name,
+                wger_id: e.wger_id ?? null,
+                category: e.category ?? "",
+                muscles: e.muscles ?? [],
+                sets: e.sets.map(s => ({ ...s })),
+            })));
         })();
     }, [templateId]);
 
@@ -43,7 +50,7 @@ export default function NewWorkout() {
             sets: e.sets.map((s, j) => j !== si ? s : { ...s, [field]: Number(val) || 0 })
         }));
     };
-    const updateName = (ei, val) => setExercises(prev => prev.map((e, i) => i === ei ? { ...e, name: val } : e));
+    const updateName = (ei, ex) => setExercises(prev => prev.map((e, i) => i === ei ? { ...e, ...ex } : e));
     const addExercise = () => setExercises(prev => [...prev, emptyExercise()]);
     const removeExercise = (ei) => setExercises(prev => prev.filter((_, i) => i !== ei));
     const addSet = (ei) => setExercises(prev => prev.map((e, i) => i === ei ? { ...e, sets: [...e.sets, emptySet()] } : e));
@@ -51,7 +58,7 @@ export default function NewWorkout() {
 
     const save = async () => {
         const cleaned = exercises
-            .map(e => ({ name: e.name.trim(), sets: e.sets }))
+            .map(e => ({ name: e.name.trim(), wger_id: e.wger_id, category: e.category, muscles: e.muscles, sets: e.sets }))
             .filter(e => e.name);
         if (cleaned.length === 0) {
             toast.error("Add at least one exercise with a name");
@@ -65,10 +72,11 @@ export default function NewWorkout() {
                 notes,
                 exercises: cleaned,
                 user_id: user.sub,
+                routine_id: templateId || null,
             });
             if (error) throw error;
             toast.success("Workout saved");
-            navigate("/workouts");
+            navigate("/routines");
         } catch (e) {
             toast.error("Failed to save workout");
         } finally {
@@ -110,12 +118,10 @@ export default function NewWorkout() {
                 {exercises.map((ex, ei) => (
                     <div key={ei} className="border border-border" data-testid={`exercise-${ei}`}>
                         <div className="flex items-center justify-between p-4 border-b border-border bg-muted/30">
-                            <input
-                                placeholder="Exercise name (e.g. Bench Press)"
+                            <ExerciseCombobox
                                 value={ex.name}
-                                onChange={e => updateName(ei, e.target.value)}
+                                onChange={val => updateName(ei, val)}
                                 data-testid={`exercise-name-${ei}`}
-                                className="flex-1 bg-transparent border-0 focus:outline-none text-base font-semibold placeholder:font-normal placeholder:text-muted-foreground"
                             />
                             <button onClick={() => removeExercise(ei)} className="p-2 hover:bg-white transition-colors" data-testid={`remove-exercise-${ei}`}>
                                 <Trash2 className="h-4 w-4" strokeWidth={1.5} />
