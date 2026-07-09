@@ -227,7 +227,7 @@ export default function RoutineDetail() {
                 <div style="font-size:11px;opacity:0.7;margin-bottom:8px">${formattedDate}</div>
                 <div style="margin-top:8px">
                     <div style="font-size:9px;font-weight:700;opacity:0.6;letter-spacing:0.05em;text-transform:uppercase;margin-bottom:2px">Duration</div>
-                    <div style="font-size:16px;font-weight:900;margin-bottom:12px">${Math.floor(wDuration / 60)}m ${wDuration % 60}s</div>
+                    <div style="font-size:16px;font-weight:900;margin-bottom:12px">${Math.floor(wDuration / 3600)}h ${Math.floor((wDuration % 3600) / 60)}min ${String(wDuration % 60).padStart(2, '0')}s</div>
                 </div>
                 <div style="margin-bottom:8px">
                     <div style="font-size:10px;font-weight:700;opacity:0.6;letter-spacing:0.05em;text-transform:uppercase;margin-bottom:2px">Total Volume</div>
@@ -413,7 +413,7 @@ export default function RoutineDetail() {
                                                     })}
                                                     {w.duration != null && (
                                                         <span className="ml-2 text-muted-foreground/70">
-                                                            · {Math.floor(w.duration / 60)}m {w.duration % 60}s
+                                                            · {Math.floor(w.duration / 3600)}h {Math.floor((w.duration % 3600) / 60)}min {String(w.duration % 60).padStart(2, '0')}s
                                                         </span>
                                                     )}
                                                 </div>
@@ -520,7 +520,7 @@ export default function RoutineDetail() {
                             <div className="text-[10px]" style={{ opacity: 0.6 }}>Sets</div>
                         </div>
                         <div>
-                            <div className="text-base font-bold">{Math.floor(totalDuration / 60)}m {totalDuration % 60}s</div>
+                            <div className="text-base font-bold">{Math.floor(totalDuration / 3600)}h {Math.floor((totalDuration % 3600) / 60)}min {String(totalDuration % 60).padStart(2, '0')}s</div>
                             <div className="text-[10px]" style={{ opacity: 0.6 }}>Duration</div>
                         </div>
                     </div>
