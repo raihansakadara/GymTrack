@@ -237,7 +237,7 @@ export default function RoutineDetail() {
                     <div style="font-size:10px;font-weight:700;opacity:0.6;letter-spacing:0.05em;text-transform:uppercase;margin-bottom:2px">Total Sets</div>
                     <div style="font-size:18px;font-weight:900">${wSets}</div>
                 </div>
-                <div style="margin-top:auto;text-align:center;margin-bottom:12px;font-size:9px;opacity:0.4">Gym Tracker</div>
+                <div style="font-family:var(--font-display,inherit);font-size:18px;font-weight:900;letter-spacing:-0.03em;text-align:center;margin-top:auto;margin-bottom:12px">GymTrack</div>
             </div>
             
         `;
@@ -546,8 +546,8 @@ export default function RoutineDetail() {
                             ))}
                         </div>
                 </div>
-                    <div className="text-center text-[9px] mt-auto pt-2" style={{ opacity: 0.4 }}>
-                        Gym Tracker
+                    <div className="font-display text-xl font-extrabold tracking-tighter text-center mt-auto pt-2 mb-4">
+                        GymTrack
                     </div>
                 </div>
 

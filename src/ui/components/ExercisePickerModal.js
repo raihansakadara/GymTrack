@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Search, ChevronLeft, X, Dumbbell, Loader2 } from "lucide-react";
 import useWgerExercises from "../../hooks/useWgerExercises";
 
@@ -8,6 +8,9 @@ export default function ExercisePickerModal({ onSelect, onClose }) {
     const [selectedCategory, setSelectedCategory] = useState(null);
     const [selectedEquipment, setSelectedEquipment] = useState(null);
     const [query, setQuery] = useState("");
+    const [comboboxValue, setComboboxValue] = useState("");
+    const [showDropdown, setShowDropdown] = useState(false);
+    const comboboxRef = useRef(null);
 
     const categories = [...new Set(exercises.map((e) => e.category))]
         .filter(Boolean)
@@ -32,6 +35,24 @@ export default function ExercisePickerModal({ onSelect, onClose }) {
         if (query && !e.name.toLowerCase().includes(query.toLowerCase())) return false;
         return true;
     });
+
+    const comboboxFiltered = exercises
+        .filter((e) =>
+            comboboxValue
+                ? e.name.toLowerCase().includes(comboboxValue.toLowerCase())
+                : false
+        )
+        .slice(0, 50);
+
+    useEffect(() => {
+        function handleClick(e) {
+            if (comboboxRef.current && !comboboxRef.current.contains(e.target)) {
+                setShowDropdown(false);
+            }
+        }
+        document.addEventListener("mousedown", handleClick);
+        return () => document.removeEventListener("mousedown", handleClick);
+    }, []);
 
     const pickCategory = (cat) => {
         setSelectedCategory(cat);
@@ -97,6 +118,67 @@ export default function ExercisePickerModal({ onSelect, onClose }) {
                 <div className="flex-1 overflow-y-auto">
                     {step === "category" && (
                         <div className="p-5">
+                            <div className="relative mb-6" ref={comboboxRef}>
+                                <div className="flex items-center gap-2 border border-border px-3 py-2">
+                                    <Search className="h-4 w-4 text-muted-foreground shrink-0" />
+                                    <input
+                                        autoFocus
+                                        placeholder="Search exercises directly..."
+                                        value={comboboxValue}
+                                        onChange={(e) => {
+                                            setComboboxValue(e.target.value);
+                                            setShowDropdown(true);
+                                        }}
+                                        onFocus={() => setShowDropdown(true)}
+                                        className="flex-1 bg-transparent border-0 focus:outline-none text-sm"
+                                    />
+                                    {comboboxValue && (
+                                        <button
+                                            onClick={() => {
+                                                setComboboxValue("");
+                                                setShowDropdown(false);
+                                            }}
+                                            className="p-0.5 hover:bg-muted rounded transition-colors"
+                                        >
+                                            <X className="h-3 w-3" strokeWidth={2} />
+                                        </button>
+                                    )}
+                                </div>
+                                {showDropdown && comboboxValue && (
+                                    <div className="absolute z-10 top-full left-0 right-0 border border-border border-t-0 bg-white max-h-60 overflow-y-auto shadow-lg">
+                                        {comboboxFiltered.length === 0 ? (
+                                            <div className="p-4 text-sm text-muted-foreground text-center">
+                                                No exercises found
+                                            </div>
+                                        ) : (
+                                            comboboxFiltered.map((ex) => (
+                                                <button
+                                                    key={ex.wger_id}
+                                                    onClick={() => onSelect(ex)}
+                                                    className="w-full flex items-center justify-between p-3 hover:bg-muted transition-colors text-left border-b border-border last:border-b-0"
+                                                >
+                                                    <div>
+                                                        <div className="text-sm font-medium">{ex.name}</div>
+                                                        <div className="text-[11px] text-muted-foreground">
+                                                            {ex.category}
+                                                            {ex.equipment?.length > 0
+                                                                ? ` · ${ex.equipment.slice(0, 2).join(", ")}`
+                                                                : ""}
+                                                        </div>
+                                                    </div>
+                                                </button>
+                                            ))
+                                        )}
+                                    </div>
+                                )}
+                            </div>
+
+                            <div className="flex items-center gap-3 mb-4">
+                                <div className="flex-1 h-px bg-border"></div>
+                                <span className="text-[11px] uppercase tracking-widest text-muted-foreground font-medium">or browse by category</span>
+                                <div className="flex-1 h-px bg-border"></div>
+                            </div>
+
                             <div className="grid grid-cols-2 gap-3">
                                 {categories.map((cat) => {
                                     const count = exercises.filter((e) => e.category === cat).length;
