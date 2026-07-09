@@ -204,6 +204,7 @@ export default function RoutineDetail() {
 
         const div = document.createElement("div");
         div.style.cssText = "position:fixed;top:0;left:0;z-index:-1;width:360px;height:640px;display:flex;flex-direction:column;overflow:hidden";
+        div.style.padding = cardBg ? "0" : "24px";
         div.style.background = cardBg
             ? `url(${cardBg}) center/cover no-repeat`
             : "#000";
@@ -502,6 +503,7 @@ export default function RoutineDetail() {
                         : "#000",
                     color: "#fff",
                     fontFamily: "system-ui, -apple-system, sans-serif",
+                    padding: cardBg ? "0" : "24px",
                 }}
             >
                 <div className="flex-1 flex flex-col justify-start min-h-0" style={{ backdropFilter: cardBg ? "brightness(0.6)" : "none", padding: cardBg ? "12px" : "0", borderRadius: cardBg ? "8px" : "0", background: cardBg ? "rgba(0,0,0,0.3)" : "none" }}>
