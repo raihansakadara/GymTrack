@@ -2,9 +2,11 @@ import { useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { supabase } from "../../lib/supabase";
 import { useAuth } from "../contexts/AuthContext";
-import { ArrowLeft, Play, Dumbbell, ChevronDown, ChevronUp, Download } from "lucide-react";
+import { ArrowLeft, Play, Dumbbell, ChevronDown, ChevronUp, Download, BarChart3, Table2 } from "lucide-react";
+import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 import { toast } from "sonner";
 import LoadingIndicator from "../components/LoadingIndicator";
+import DateRangeFilter from "../components/DateRangeFilter";
 import html2canvas from "html2canvas";
 
 export default function RoutineDetail() {
@@ -17,6 +19,9 @@ export default function RoutineDetail() {
     const [openWorkout, setOpenWorkout] = useState(null);
     const [cardBg, setCardBg] = useState(null);
     const [exporting, setExporting] = useState(false);
+    const [progressTab, setProgressTab] = useState("table");
+    const [openExercises, setOpenExercises] = useState({});
+    const [appliedRange, setAppliedRange] = useState(null);
     const fileInputRef = useRef(null);
     const cardRef = useRef(null);
 
@@ -43,20 +48,28 @@ export default function RoutineDetail() {
                 .eq("routine_id", id)
                 .order("date", { ascending: false });
 
-            if (wos) setWorkouts(wos);
+            if (wos) {
+                setWorkouts(wos);
+                if (wos.length > 0) {
+                    const dates = wos.map(w => new Date(w.date + "T00:00:00")).sort((a, b) => a - b);
+                    setAppliedRange({ startDate: dates[0], endDate: new Date(), key: "selection", color: "hsl(12, 76%, 61%)" });
+                } else {
+                    setAppliedRange({ startDate: new Date(), endDate: new Date(), key: "selection", color: "hsl(12, 76%, 61%)" });
+                }
+            }
 
             setLoading(false);
         })();
     }, [user, id, navigate]);
 
-    const buildProgress = () => {
-        if (!routine || !workouts.length) return [];
+    const buildProgress = (wos) => {
+        if (!routine || !wos.length) return [];
 
         const matchedIds = new Set();
 
         const routineProgress = routine.exercises.map((rex) => {
             const entries = [];
-            for (const w of workouts) {
+            for (const w of wos) {
                 const match = w.exercises?.find(
                     (wex) => wex.wger_id != null && wex.wger_id === rex.wger_id
                 );
@@ -95,12 +108,12 @@ export default function RoutineDetail() {
         });
 
         const adhoc = [];
-        for (const w of workouts) {
+        for (const w of wos) {
             for (const wex of w.exercises || []) {
                 if (wex.wger_id && !matchedIds.has(wex.wger_id)) {
                     matchedIds.add(wex.wger_id);
                     const wEntries = [];
-                    for (const w2 of workouts) {
+                    for (const w2 of wos) {
                         const m = w2.exercises?.find(
                             (ex2) => ex2.wger_id === wex.wger_id
                         );
@@ -153,14 +166,21 @@ export default function RoutineDetail() {
 
     if (!routine) return null;
 
-    const progress = buildProgress();
+    const filteredWorkouts = appliedRange
+        ? workouts.filter(w => {
+            const d = new Date(w.date + "T00:00:00");
+            return d >= appliedRange.startDate && d <= appliedRange.endDate;
+        })
+        : workouts;
+
+    const progress = buildProgress(filteredWorkouts);
     const hasWorkouts = workouts.length > 0;
 
-    const totalDuration = workouts.reduce((sum, w) => sum + (w.duration || 0), 0);
-    const totalVolume = workouts.reduce((sum, w) =>
+    const totalDuration = filteredWorkouts.reduce((sum, w) => sum + (w.duration || 0), 0);
+    const totalVolume = filteredWorkouts.reduce((sum, w) =>
         sum + (w.exercises || []).reduce((s, ex) =>
             s + (ex.sets || []).reduce((ss, set) => ss + (set.weight || 0) * (set.reps || 0), 0), 0), 0);
-    const totalSets = workouts.reduce((sum, w) =>
+    const totalSets = filteredWorkouts.reduce((sum, w) =>
         sum + (w.exercises || []).reduce((s, ex) => s + (ex.sets || []).length, 0), 0);
 
     const exerciseSummaries = progress.map((p) => {
@@ -225,21 +245,24 @@ export default function RoutineDetail() {
                 <div style="font-size:9px;letter-spacing:0.25em;text-transform:uppercase;opacity:0.6;margin-bottom:4px">Workout Summary</div>
                 <h1 style="font-size:16px;font-weight:900;letter-spacing:-0.03em;margin:0 0 2px">${w.title}</h1>
                 <div style="font-size:11px;opacity:0.7;margin-bottom:8px">${formattedDate}</div>
-                <div style="margin-top:8px">
-                    <div style="font-size:9px;font-weight:700;opacity:0.6;letter-spacing:0.05em;text-transform:uppercase;margin-bottom:2px">Duration</div>
-                    <div style="font-size:16px;font-weight:900;margin-bottom:12px">${Math.floor(wDuration / 3600)}h ${Math.floor((wDuration % 3600) / 60)}min ${String(wDuration % 60).padStart(2, '0')}s</div>
+                <div style="margin-top:auto;text-align:center">
+                    <div style="display:flex;justify-content:center;gap:16px;margin-bottom:8px">
+                        <div>
+                            <div style="font-size:9px;font-weight:700;opacity:0.6;letter-spacing:0.05em;text-transform:uppercase;margin-bottom:2px">Duration</div>
+                            <div style="font-size:14px;font-weight:900">${Math.floor(wDuration / 3600)}h ${Math.floor((wDuration % 3600) / 60)}min ${String(wDuration % 60).padStart(2, '0')}s</div>
+                        </div>
+                        <div>
+                            <div style="font-size:9px;font-weight:700;opacity:0.6;letter-spacing:0.05em;text-transform:uppercase;margin-bottom:2px">Volume</div>
+                            <div style="font-size:14px;font-weight:900">${wVolume.toLocaleString()} kg</div>
+                        </div>
+                        <div>
+                            <div style="font-size:9px;font-weight:700;opacity:0.6;letter-spacing:0.05em;text-transform:uppercase;margin-bottom:2px">Sets</div>
+                            <div style="font-size:14px;font-weight:900">${wSets}</div>
+                        </div>
+                    </div>
+                    <div style="font-family:'Manrope',sans-serif;font-size:18px;font-weight:800;letter-spacing:-0.02em;margin-bottom:12px">GymTrack</div>
                 </div>
-                <div style="margin-bottom:8px">
-                    <div style="font-size:10px;font-weight:700;opacity:0.6;letter-spacing:0.05em;text-transform:uppercase;margin-bottom:2px">Total Volume</div>
-                    <div style="font-size:18px;font-weight:900">${wVolume.toLocaleString()} kg</div>
-                </div>
-                <div>
-                    <div style="font-size:10px;font-weight:700;opacity:0.6;letter-spacing:0.05em;text-transform:uppercase;margin-bottom:2px">Total Sets</div>
-                    <div style="font-size:18px;font-weight:900">${wSets}</div>
-                </div>
-                <div style="font-family:var(--font-display,inherit);font-size:18px;font-weight:900;letter-spacing:-0.03em;text-align:center;margin-top:auto;margin-bottom:12px">GymTrack</div>
             </div>
-            
         `;
 
         document.body.appendChild(div);
@@ -323,72 +346,213 @@ export default function RoutineDetail() {
             {hasWorkouts && (
                 <div className="space-y-8">
                     <div>
-                        <div className="text-xs tracking-[0.2em] uppercase text-muted-foreground mb-4">Progress</div>
-                        {progress.map((ex, ei) => (
-                            <div key={ei} className="border border-border mb-6">
-                                <div className="p-4 border-b border-border bg-muted/30 flex items-center justify-between">
-                                    <div>
-                                        <span className="font-semibold text-sm">{ex.name}</span>
-                                        {ex.category && (
-                                            <span className="ml-2 text-[10px] uppercase tracking-wider text-muted-foreground">
-                                                {ex.category}
-                                            </span>
-                                        )}
-                                    </div>
-                                    {ex.bestSet.weight > 0 && (
-                                        <div className="text-xs text-muted-foreground">
-                                            PR: <span className="font-bold tabular-nums text-foreground">{ex.bestSet.weight} kg</span>
+                        <div className="flex items-center justify-between mb-4">
+                            <div className="text-xs tracking-[0.2em] uppercase text-muted-foreground">Progress</div>
+                            {appliedRange && (
+                                <DateRangeFilter
+                                    appliedRange={appliedRange}
+                                    onConfirm={setAppliedRange}
+                                />
+                            )}
+                        </div>
+
+                        <div className="flex border-b border-border mb-6">
+                            <button
+                                onClick={() => setProgressTab("chart")}
+                                className={`flex items-center gap-2 px-4 py-2.5 text-xs tracking-wider uppercase font-semibold border-b-2 transition-colors ${
+                                    progressTab === "chart"
+                                        ? "border-accent text-foreground"
+                                        : "border-transparent text-muted-foreground hover:text-foreground"
+                                }`}
+                            >
+                                <BarChart3 className="h-3.5 w-3.5" />
+                                Chart
+                            </button>
+                            <button
+                                onClick={() => setProgressTab("table")}
+                                className={`flex items-center gap-2 px-4 py-2.5 text-xs tracking-wider uppercase font-semibold border-b-2 transition-colors ${
+                                    progressTab === "table"
+                                        ? "border-accent text-foreground"
+                                        : "border-transparent text-muted-foreground hover:text-foreground"
+                                }`}
+                            >
+                                <Table2 className="h-3.5 w-3.5" />
+                                Table
+                            </button>
+                        </div>
+
+                        {progressTab === "chart" && (
+                            <div className="space-y-6">
+                                {progress.map((ex, ei) => {
+                                    const isOpen = !!openExercises[ei];
+                                    const chartData = ex.entries
+                                        .map(e => ({
+                                            date: new Date(e.date + "T00:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric" }),
+                                            weight: Math.max(...e.sets.map(s => s.weight || 0), 0),
+                                        }))
+                                        .reverse();
+
+                                    return (
+                                        <div key={ei} className="border border-border">
+                                            <button
+                                                onClick={() => setOpenExercises(prev => ({ ...prev, [ei]: !prev[ei] }))}
+                                                className="w-full p-4 border-b border-border bg-muted/30 flex items-center justify-between text-left"
+                                            >
+                                                <div className="flex items-center gap-3">
+                                                    {isOpen ? (
+                                                        <ChevronUp className="h-4 w-4 text-muted-foreground shrink-0" />
+                                                    ) : (
+                                                        <ChevronDown className="h-4 w-4 text-muted-foreground shrink-0" />
+                                                    )}
+                                                    <div>
+                                                        <span className="font-semibold text-sm">{ex.name}</span>
+                                                        {ex.category && (
+                                                            <span className="ml-2 text-[10px] uppercase tracking-wider text-muted-foreground">
+                                                                {ex.category}
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                                <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                                                    <span>{ex.entries.length} sessions</span>
+                                                    {ex.bestSet.weight > 0 && (
+                                                        <span>PR: <span className="font-bold tabular-nums text-foreground">{ex.bestSet.weight} kg</span></span>
+                                                    )}
+                                                </div>
+                                            </button>
+                                            {isOpen && (
+                                                <div className="p-4">
+                                                    {chartData.length > 0 ? (
+                                                        <ResponsiveContainer width="100%" height={200}>
+                                                            <LineChart data={chartData}>
+                                                                <XAxis
+                                                                    dataKey="date"
+                                                                    tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }}
+                                                                    axisLine={false}
+                                                                    tickLine={false}
+                                                                />
+                                                                <YAxis
+                                                                    tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }}
+                                                                    axisLine={false}
+                                                                    tickLine={false}
+                                                                    width={40}
+                                                                />
+                                                                <Tooltip
+                                                                    contentStyle={{
+                                                                        background: "hsl(var(--background))",
+                                                                        border: "1px solid hsl(var(--border))",
+                                                                        borderRadius: 0,
+                                                                        fontSize: 12,
+                                                                    }}
+                                                                />
+                                                                <Line
+                                                                    type="monotone"
+                                                                    dataKey="weight"
+                                                                    stroke="hsl(12, 76%, 61%)"
+                                                                    strokeWidth={2}
+                                                                    dot={{ fill: "hsl(12, 76%, 61%)", r: 3 }}
+                                                                    activeDot={{ r: 5 }}
+                                                                />
+                                                            </LineChart>
+                                                        </ResponsiveContainer>
+                                                    ) : (
+                                                        <div className="text-xs text-muted-foreground py-8 text-center">
+                                                            No data in selected range.
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            )}
                                         </div>
-                                    )}
-                                </div>
-                                {ex.entries.length === 0 ? (
-                                    <div className="p-4 text-xs text-muted-foreground">
-                                        No logged sessions for this exercise yet.
-                                    </div>
-                                ) : (
-                                    <div className="overflow-x-auto">
-                                        <table className="w-full text-xs">
-                                            <thead>
-                                                <tr className="border-b border-border text-[10px] uppercase tracking-wider text-muted-foreground">
-                                                    <th className="p-2 sm:p-3 border-r border-border text-left whitespace-nowrap">Date</th>
-                                                    {Array.from({ length: ex.maxSets }).map((_, si) => (
-                                                        <th key={si} className="p-2 sm:p-3 border-r border-border last:border-r-0 text-center whitespace-nowrap">
-                                                            Set {si + 1}
-                                                        </th>
-                                                    ))}
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                {ex.entries.map((entry, ei) => (
-                                                    <tr key={entry.workoutId} className="border-b border-border last:border-b-0">
-                                                        <td className="p-2 sm:p-3 border-r border-border font-medium tabular-nums whitespace-nowrap">
-                                                            {new Date(entry.date + "T00:00:00").toLocaleDateString("en-US", {
-                                                                month: "short",
-                                                                day: "numeric",
-                                                            })}
-                                                        </td>
-                                                        {Array.from({ length: ex.maxSets }).map((_, si) => {
-                                                            const s = entry.sets[si];
-                                                            const isPR = s && ex.bestSet.weight > 0 && s.weight === ex.bestSet.weight;
-                                                            return (
-                                                                <td
-                                                                    key={si}
-                                                                    className={`p-2 sm:p-3 border-r border-border last:border-r-0 text-center tabular-nums ${
-                                                                        isPR ? "font-bold text-accent" : ""
-                                                                    }`}
-                                                                >
-                                                                    {s ? `${s.weight} × ${s.reps}` : "—"}
-                                                                </td>
-                                                            );
-                                                        })}
-                                                    </tr>
-                                                ))}
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                )}
+                                    );
+                                })}
                             </div>
-                        ))}
+                        )}
+
+                        {progressTab === "table" && (
+                            <div>
+                                {progress.map((ex, ei) => {
+                                    const isOpen = !!openExercises[ei];
+                                    return (
+                                        <div key={ei} className="border border-border mb-6">
+                                            <button
+                                                onClick={() => setOpenExercises(prev => ({ ...prev, [ei]: !prev[ei] }))}
+                                                className="w-full p-4 border-b border-border bg-muted/30 flex items-center justify-between text-left"
+                                            >
+                                                <div className="flex items-center gap-3">
+                                                    {isOpen ? (
+                                                        <ChevronUp className="h-4 w-4 text-muted-foreground shrink-0" />
+                                                    ) : (
+                                                        <ChevronDown className="h-4 w-4 text-muted-foreground shrink-0" />
+                                                    )}
+                                                    <div>
+                                                        <span className="font-semibold text-sm">{ex.name}</span>
+                                                        {ex.category && (
+                                                            <span className="ml-2 text-[10px] uppercase tracking-wider text-muted-foreground">
+                                                                {ex.category}
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                                <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                                                    <span>{ex.entries.length} sessions</span>
+                                                    {ex.bestSet.weight > 0 && (
+                                                        <span>PR: <span className="font-bold tabular-nums text-foreground">{ex.bestSet.weight} kg</span></span>
+                                                    )}
+                                                </div>
+                                            </button>
+                                            {isOpen && (
+                                                ex.entries.length === 0 ? (
+                                                    <div className="p-4 text-xs text-muted-foreground">
+                                                        No logged sessions for this exercise yet.
+                                                    </div>
+                                                ) : (
+                                                    <div className="overflow-x-auto">
+                                                        <table className="w-full text-xs">
+                                                            <thead>
+                                                                <tr className="border-b border-border text-[10px] uppercase tracking-wider text-muted-foreground">
+                                                                    <th className="p-2 sm:p-3 border-r border-border text-left whitespace-nowrap">Date</th>
+                                                                    {Array.from({ length: ex.maxSets }).map((_, si) => (
+                                                                        <th key={si} className="p-2 sm:p-3 border-r border-border last:border-r-0 text-center whitespace-nowrap">
+                                                                            Set {si + 1}
+                                                                        </th>
+                                                                    ))}
+                                                                </tr>
+                                                            </thead>
+                                                            <tbody>
+                                                                {ex.entries.map((entry, idx) => (
+                                                                    <tr key={entry.workoutId} className="border-b border-border last:border-b-0">
+                                                                        <td className="p-2 sm:p-3 border-r border-border font-medium tabular-nums whitespace-nowrap">
+                                                                            {new Date(entry.date + "T00:00:00").toLocaleDateString("en-US", {
+                                                                                month: "short",
+                                                                                day: "numeric",
+                                                                            })}
+                                                                        </td>
+                                                                        {Array.from({ length: ex.maxSets }).map((_, si) => {
+                                                                            const s = entry.sets[si];
+                                                                            const isPR = s && ex.bestSet.weight > 0 && s.weight === ex.bestSet.weight;
+                                                                            return (
+                                                                                <td
+                                                                                    key={si}
+                                                                                    className={`p-2 sm:p-3 border-r border-border last:border-r-0 text-center tabular-nums ${
+                                                                                        isPR ? "font-bold text-accent" : ""
+                                                                                    }`}
+                                                                                >
+                                                                                    {s ? `${s.weight} × ${s.reps}` : "—"}
+                                                                                </td>
+                                                                            );
+                                                                        })}
+                                                                    </tr>
+                                                                ))}
+                                                            </tbody>
+                                                        </table>
+                                                    </div>
+                                                )
+                                            )}
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        )}
                     </div>
 
                     <div>
