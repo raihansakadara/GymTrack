@@ -1,6 +1,63 @@
-# Getting Started with Create React App
+# GymTrack
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+A minimalist gym log to record workouts, body measurements, and watch your progress compound over time.
+
+## Features
+
+- Google Sign-In authentication via Supabase Auth
+- Workout routines with exercise logging and active workout timer
+- Exercise picker backed by the [wger](https://wger.de) exercise database (cached locally for 24h)
+- Body measurement tracking with progress charts
+- Workout templates
+- Calendar view of your training history
+- Dashboard overview with progress visualization
+- Charts powered by Recharts
+
+## Tech Stack
+
+- **React 19** with Create React App
+- **Tailwind CSS** for styling
+- **Supabase** for authentication and backend
+- **wger API** for the exercise database
+- **React Router** for routing
+- **Recharts** for charts
+- **lucide-react** for icons
+- **sonner** for toasts
+- **date-fns** & **react-date-range** for date handling
+
+## Getting Started
+
+### Prerequisites
+
+- Node.js & npm
+- A Supabase project with Google OAuth enabled
+
+### Setup
+
+1. Install dependencies:
+
+   ```bash
+   npm install
+   ```
+
+2. Create a `.env` file from the example and fill in your credentials:
+
+   ```bash
+   cp .env.example .env
+   ```
+
+   | Variable                      | Description              |
+   | ----------------------------- | ------------------------ |
+   | `REACT_APP_SUPABASE_URL`      | Your Supabase project URL |
+   | `REACT_APP_SUPABASE_ANON_KEY` | Your Supabase anon key   |
+
+3. Start the development server:
+
+   ```bash
+   npm start
+   ```
+
+Open [http://localhost:3000](http://localhost:3000) to view it in your browser. The page reloads when you make changes.
 
 ## Available Scripts
 
@@ -8,63 +65,32 @@ In the project directory, you can run:
 
 ### `npm start`
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
-
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+Runs the app in development mode.
 
 ### `npm test`
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+Launches the test runner in interactive watch mode.
 
 ### `npm run build`
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
-
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
-
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+Builds the app for production to the `build` folder.
 
 ### `npm run eject`
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+Removes the single build dependency from your project. **Note: this is a one-way operation. Once you eject, you can't go back.**
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+## Project Structure
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
-
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
-
-## Learn More
-
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
-
-To learn React, check out the [React documentation](https://reactjs.org/).
-
-### Code Splitting
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
-
-### Analyzing the Bundle Size
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
-
-### Making a Progressive Web App
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
-
-### Advanced Configuration
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
-
-### Deployment
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
-
-### `npm run build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+```
+src/
+├── App.js                 # Router setup
+├── lib/
+│   ├── supabase.js        # Supabase client
+│   └── wger.js            # wger exercise API wrapper
+├── hooks/
+│   └── useWgerExercises.js # wger exercises hook with caching
+├── ui/
+│   ├── components/        # Layout, protected routes, modals, pickers
+│   ├── contexts/          # AuthContext
+│   └── pages/             # Dashboard, Routines, Measurements, Templates, Calendar, etc.
+```
